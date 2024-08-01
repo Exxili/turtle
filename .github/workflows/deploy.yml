@@ -1,0 +1,25 @@
+name: Deploy to Raspberry Pi
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-run:
+    runs-on: self-hosted
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20" # Specify your project's Node.js version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run the project
+        run: |
+          node index.js
