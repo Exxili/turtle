@@ -23,6 +23,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Install pm2 globally
+        run: npm install -g pm2
+
       - name: Start the application with pm2
         run: |
           pm2 stop index || true  # Stop the previous instance if it's running
