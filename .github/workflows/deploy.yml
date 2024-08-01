@@ -23,6 +23,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Deploy Commands
+        run: node deploy-commands.js
+
       - name: Start the application with pm2
         run: |
           pm2 stop index || true  # Stop the previous instance if it's running
