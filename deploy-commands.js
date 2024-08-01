@@ -1,11 +1,15 @@
 import { REST, Routes } from "discord.js";
 import dotenv from "dotenv";
-// import { clientId, guildId, token } = require("./config.json");
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "url";
 
 // Get the environment variables from the .env file
 dotenv.config();
+
+// Get the directory name equivalent to __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Get the client ID, guild ID, and token from the config.json file
 
@@ -48,7 +52,7 @@ const rest = new REST().setToken(process.env.TOKEN);
     const data = await rest.put(
       Routes.applicationGuildCommands(
         process.env.CLIENTID,
-        processs.env.GUILDID
+        process.env.GUILDID
       ),
       { body: commands }
     );
