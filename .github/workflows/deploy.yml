@@ -26,4 +26,4 @@ jobs:
       - name: Start the application with pm2
         run: |
           pm2 stop index || true  # Stop the previous instance if it's running
-          pm2 start index.js --name "index"
+          pm2 start index.js --name "index" --watch
