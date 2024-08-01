@@ -23,6 +23,7 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run the project
+      - name: Start the application with pm2
         run: |
-          node index.js
+          pm2 stop index || true  # Stop the previous instance if it's running
+          pm2 start index.js --name "index"
