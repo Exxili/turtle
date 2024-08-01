@@ -1,5 +1,5 @@
-import dotenv from "dotenv";
-import { Client, Events, GatewayIntentBits, Collection } from "discord.js";
+const dotenv = require("dotenv");
+const { Client, Events, GatewayIntentBits, Collection } = require("discord.js");
 
 // Setup environment variables
 dotenv.config();
