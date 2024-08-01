@@ -27,3 +27,4 @@ jobs:
         run: |
           pm2 stop index || true  # Stop the previous instance if it's running
           pm2 start index.js --name "index" --watch
+          pm2 save
