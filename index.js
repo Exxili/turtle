@@ -2,6 +2,7 @@ const { Client, Events, GatewayIntentBits, Collection } = require("discord.js");
 const fs = require("node:fs");
 const path = require("node:path");
 const dotenv = require("dotenv");
+const sequelize = require("./database/main");
 
 // Setup environment variables
 dotenv.config();
@@ -74,3 +75,15 @@ client.once(Events.ClientReady, (readyClient) => {
 
 // Log in to Discord with your client's token
 client.login(process.env.TOKEN);
+
+async function authenticate() {
+  try {
+    await sequelize.authenticate();
+    console.log("Connection has been established successfully.");
+  } catch (error) {
+    console.error("Unable to connect to the database:", error);
+  }
+}
+
+// Attempt to authenticate with Sequelize
+authenticate();
