@@ -8,7 +8,13 @@ const sequelize = require("./database/main");
 dotenv.config();
 
 // Create a new client instance
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildMessageReactions,
+  ],
+});
 
 // Add the slash commands to the client
 client.commands = new Collection();
@@ -39,7 +45,7 @@ for (const folder of commandFolders) {
 // Listen for any kind of interaction
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
-  console.log(interaction);
+  // console.log(interaction);
 
   const command = interaction.client.commands.get(interaction.commandName);
 

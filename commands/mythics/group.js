@@ -1,177 +1,122 @@
-const {
-  SlashCommandBuilder,
-  ActionRowBuilder,
-  StringSelectMenuBuilder,
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
-} = require("discord.js");
+const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("group")
-    .setDescription("Create a Looking For Group post for a dungeon."),
+    .setDescription("Form a Looking For Group post."),
   async execute(interaction) {
-    // Define the options for the select menu (list of dungeons)
-    const dungeonOptions = [
-      { label: "Dungeon 1", value: "dungeon1" },
-      { label: "Dungeon 2", value: "dungeon2" },
-      { label: "Dungeon 3", value: "dungeon3" },
-      // Add more dungeons as needed
-    ];
+    // Create a message for users to react to with their roles
+    const embed = new EmbedBuilder()
+      .setColor("#0099ff")
+      .setTitle("Sign up for a Dungeon")
+      .setDescription(
+        "React to this message with your role:\n\n" +
+          "🛡️ - Tank (Main)\n" +
+          "⚔️ - Tank (Alt)\n" +
+          "🎯 - DPS\n" +
+          "❤️ - Healer (Main)\n" +
+          "💊 - Healer (Alt)"
+      );
 
-    // Create a select menu component
-    const selectMenu = new StringSelectMenuBuilder()
-      .setCustomId("select-dungeon")
-      .setPlaceholder("Select a dungeon...")
-      .addOptions(dungeonOptions);
-
-    // Create an action row to hold the select menu
-    const row = new ActionRowBuilder().addComponents(selectMenu);
-
-    // Send the initial interaction response with the select menu, visible only to the user
-    await interaction.reply({
-      content: "Please select the dungeon you will be doing:",
-      components: [row],
-      ephemeral: true,
+    const signUpMessage = await interaction.reply({
+      embeds: [embed],
+      fetchReply: true,
     });
 
-    // Create a collector to handle the user's selection
-    const collector = interaction.channel.createMessageComponentCollector({
-      componentType: "SELECT_MENU",
-      time: 60000, // 1 minute to respond
+    const emojis = ["🛡️", "⚔️", "🎯", "❤️", "💊"];
+    for (const emoji of emojis) {
+      await signUpMessage.react(emoji);
+    }
+
+    // Create a collector to handle the reactions
+    const reactionCollector = signUpMessage.createReactionCollector({
+      time: 60000, // 1 minute to react
     });
 
-    collector.on("collect", async (i) => {
-      if (i.user.id === interaction.user.id) {
-        // Handle the user's selection
-        const selectedDungeon = i.values[0]; // Get the selected dungeon value
-        const dungeonName = dungeonOptions.find(
-          (opt) => opt.value === selectedDungeon
-        ).label;
+    const roles = {
+      tankMain: [],
+      tankAlt: [],
+      dps: [],
+      healerMain: [],
+      healerAlt: [],
+    };
 
-        // Create a message for users to react to with their roles
-        const embed = new MessageEmbed()
-          .setColor("#0099ff")
-          .setTitle(`Sign up for ${dungeonName}`)
-          .setDescription(
-            "React to this message with your role:\n\n" +
-              "🛡️ - Tank (Main)\n" +
-              "⚔️ - Tank (Alt)\n" +
-              "🎯 - DPS\n" +
-              "❤️ - Healer (Main)\n" +
-              "💊 - Healer (Alt)"
-          );
+    reactionCollector.on("collect", (reaction, user) => {
+      // Ensure the reaction is from a user and not a bot
+      if (user.bot) return;
 
-        const signUpMessage = await i.channel.send({ embeds: [embed] });
-
-        const emojis = ["🛡️", "⚔️", "🎯", "❤️", "💊"];
-        for (const emoji of emojis) {
-          await signUpMessage.react(emoji);
-        }
-
-        // Create a collector to handle the reactions
-        const reactionCollector = signUpMessage.createReactionCollector({
-          time: 60000, // 1 minute to react
-        });
-
-        const roles = {
-          tankMain: [],
-          tankAlt: [],
-          dps: [],
-          healerMain: [],
-          healerAlt: [],
-        };
-
-        reactionCollector.on("collect", (reaction, user) => {
-          if (user.bot) return;
-
-          switch (reaction.emoji.name) {
-            case "🛡️":
-              roles.tankMain.push(user);
-              break;
-            case "⚔️":
-              roles.tankAlt.push(user);
-              break;
-            case "🎯":
-              roles.dps.push(user);
-              break;
-            case "❤️":
-              roles.healerMain.push(user);
-              break;
-            case "💊":
-              roles.healerAlt.push(user);
-              break;
+      // Check the emoji and assign the user to the respective role
+      switch (reaction.emoji.name) {
+        case "🛡️": // Tank Main
+          if (!roles.tankMain.includes(user.displayName)) {
+            roles.tankMain.push(user.displayName);
           }
-        });
-
-        reactionCollector.on("end", async () => {
-          // Select the group
-          let tank =
-            roles.tankMain.length > 0
-              ? roles.tankMain[0]
-              : roles.tankAlt.length > 0
-                ? roles.tankAlt[
-                    Math.floor(Math.random() * roles.tankAlt.length)
-                  ]
-                : null;
-          let healer =
-            roles.healerMain.length > 0
-              ? roles.healerMain[0]
-              : roles.healerAlt.length > 0
-                ? roles.healerAlt[
-                    Math.floor(Math.random() * roles.healerAlt.length)
-                  ]
-                : null;
-          let dps = [];
-
-          if (roles.dps.length >= 3) {
-            for (let i = 0; i < 3; i++) {
-              const randomIndex = Math.floor(Math.random() * roles.dps.length);
-              dps.push(roles.dps.splice(randomIndex, 1)[0]);
-            }
+          break;
+        case "⚔️": // Tank Alt
+          if (!roles.tankAlt.includes(user.displayName)) {
+            roles.tankAlt.push(user.displayName);
           }
-
-          // Check if a full group can be formed
-          if (tank && healer && dps.length === 3) {
-            const groupEmbed = new MessageEmbed()
-              .setColor("#00ff00")
-              .setTitle("Dungeon Group Formed")
-              .setDescription(
-                `**Dungeon:** ${dungeonName}\n` +
-                  `**Tank:** ${tank.username}\n` +
-                  `**Healer:** ${healer.username}\n` +
-                  `**DPS:** ${dps.map((user) => user.username).join(", ")}`
-              );
-
-            await i.followUp({ embeds: [groupEmbed] });
-          } else {
-            await i.followUp("Not enough players to form a group.");
+          break;
+        case "🎯": // DPS
+          if (!roles.dps.includes(user.displayName)) {
+            roles.dps.push(user.displayName);
           }
-        });
-
-        await i.update({
-          content: `You have selected ${dungeonName}. Players can now sign up for roles by reacting to the message.`,
-          components: [], // Remove the select menu
-          ephemeral: true,
-        });
-      } else {
-        // If another user tries to interact, send a message indicating they can't
-        await i.reply({
-          content: "This selection is not for you!",
-          ephemeral: true,
-        });
+          break;
+        case "❤️": // Healer Main
+          if (!roles.healerMain.includes(user.displayName)) {
+            roles.healerMain.push(user.displayName);
+          }
+          break;
+        case "💊": // Healer Alt
+          if (!roles.healerAlt.includes(user.displayName)) {
+            roles.healerAlt.push(user.displayName);
+          }
+          break;
       }
     });
 
-    collector.on("end", async (collected) => {
-      if (collected.size === 0) {
-        await interaction.editReply({
-          content: "You did not select a dungeon in time.",
-          components: [],
-          ephemeral: true,
-        });
+    reactionCollector.on("end", async () => {
+      // Randomly select one user from an array if it contains multiple users
+      const getRandomUser = (users) => {
+        return users.length > 0
+          ? users[Math.floor(Math.random() * users.length)]
+          : undefined;
+      };
+
+      // Determine final group members
+      const tank =
+        roles.tankMain.length > 0
+          ? getRandomUser(roles.tankMain)
+          : roles.tankAlt.length > 0
+            ? getRandomUser(roles.tankAlt)
+            : undefined;
+      const healer =
+        roles.healerMain.length > 0
+          ? getRandomUser(roles.healerMain)
+          : roles.healerAlt.length > 0
+            ? getRandomUser(roles.healerAlt)
+            : undefined;
+      const dps = roles.dps.length >= 3 ? roles.dps.slice(0, 3) : undefined;
+
+      // Check if all required roles are filled
+      if (!tank || !healer || !dps || dps.length < 3) {
+        await interaction.followUp(
+          "Error: Not enough members to form a full group (1 Tank, 1 Healer, 3 DPS)."
+        );
+        return;
       }
+
+      // Create an embed to show the final group
+      const groupEmbed = new EmbedBuilder()
+        .setColor("#00ff00")
+        .setTitle("Dungeon Group Formed")
+        .setDescription(
+          `**Tank:** ${tank}\n` +
+            `**Healer:** ${healer}\n` +
+            `**DPS:** ${dps.join(", ")}`
+        );
+
+      await interaction.followUp({ embeds: [groupEmbed] });
     });
   },
 };
